@@ -1,11 +1,64 @@
 #include<stdio.h>
 #include<unistd.h>
 #include <stdint.h>
+#include<pthread.h>
 #include "../include/image.h"
 #include "../include/utils.h"
 #include "../include/pipeline.h"
 
 #define DEBUG 1 //DEJAR EN 1 PARA QUE NO SE SOBREESCRIBA LA IMAGEN
+#define QUEUESIZE 10
+typedef struct {
+    int buf[QUEUESIZE];
+    int head, tail;
+    int full, empty;
+    pthread_mutex_t mutex;
+    pthread_cond_t notFull,notEmpty;
+}buffer_t;
+
+
+
+
+
+void *producer(void *arg){
+    int v;
+    buffer_t *buffer;
+    buffer = (buffer_t *) arg;
+
+    while(1){
+        v = produce();
+        pthread_mutex_lock(&buffer->mutex);
+        while (buffer->full){
+            pthread_cond_wait (&buffer->notFull, &buffer->mutex);
+        }
+        put_in_buffer(buffer, v);
+        pthread_cond_signal(&buffer->notEmpty);
+        pthread_mutex_unlock(&buffer->mutex);
+    }
+
+}
+
+void *consumer(void *arg){
+    int v;
+    buffer_t *buffer;
+    buffer = (buffer_t *) arg;
+    while(1){
+        pthread_mutex_lock(&buffer->mutex);
+        while (buffer->empty) {
+            pthread_cond_wait (&buffer->notEmpty, &buffer->mutex);
+        }
+        v = take_from_buffer(buffer);
+        pthread_cond_signal(&buffer->notFull);
+        pthread_mutex_unlock(&buffer->mutex);
+    }
+}
+
+
+
+
+
+
+
 
 
 int main(int argc, char const *argv[])

@@ -133,36 +133,25 @@ uint8_t laplace(uint8_t * p,int i,int j,Image*img,Config*c){
 
 }
 
-/**
- * @brief Función que transforma la imagen a escala de grises
- * 
- * 
- * @param c Configuracion
- * @param img Estructura imagen
- */
-void rgb_to_grayscale(Config * c,Image *img){
+
+uint8_t * rgb_to_grayscale(uint8_t * data,int width, int height, int *channels){
     // Inicializa las variables
-    int img_size = img->width*img->height*img->channels; //Tamaño de la imagen
-    int gray_channels = img->channels == 4 ? 2 : 1; // Nuevos canales
-    int gray_img_size = img->width*img->height*gray_channels; //Tamaño de la imagen usando los nuevos canales
+    int img_size = width*height* *channels; //Tamaño de la imagen
+    int gray_channels = *channels == 4 ? 2 : 1; // Nuevos canales
+    int gray_img_size = width*height*gray_channels; //Tamaño de la imagen usando los nuevos canales
     uint8_t *gray_img = malloc(sizeof(uint8_t)*gray_img_size); //Asignar la memoria para la nueva imagen
     //Recorriendo la imagen
     //Idea extraida del video: https://solarianprogrammer.com/2019/06/10/c-programming-reading-writing-images-stb_image-libraries/
-    for(uint8_t *p = img->data, *pg = gray_img; p != img->data + img_size; p+= img->channels, pg+= gray_channels){
+    for(uint8_t *p = data, *pg = gray_img; p != data + img_size; p+= channels, pg+= gray_channels){
         *pg = (uint8_t)((*p)*0.3 + (*p + 1)*0.59 + (*p+2)*0.11);
     }
-    stbi_image_free(img->data); // Liberación de memoria
-    img->data = gray_img; // Asignación de la nueva imagen
-    img->channels = gray_channels;// Asignación de los nuevos canales
+    free(data);
+    *channels = gray_channels;
+    return gray_img;
 }
 
 
-/**
- * @brief Función que aplica la máscara de filtro laplaciano a la imagen
- * 
- * @param c Estructura configuracion
- * @param img Estructura imagen
- */
+
 void apply_lap_filter(Config * c,Image *img){
     int img_size = img->width*img->height*img->channels; //Tamaño de la imagen
     uint8_t *lap_img = malloc(sizeof(uint8_t)*img_size); //Asignar la memoria para la nueva imagen
@@ -183,39 +172,27 @@ void apply_lap_filter(Config * c,Image *img){
     img->data = lap_img; // Asignación de la nueva imagen
 }
 
-/**
- * @brief Función que Binariza la imagen en base a un umbral
- * 
- * @param c Estructura configuración
- * @param img Estructura imagen
- */
-void apply_binary(Config * c,Image *img){
+
+uint8_t* apply_binary(uint8_t * data,int width, int height, int channels, int bin_threshold){
     
-    int img_size = img->width*img->height*img->channels; //Tamaño de la imagen
+    int img_size = width*height*channels; //Tamaño de la imagen
     uint8_t *binary_img = malloc(sizeof(uint8_t)*img_size); //Asignar la memoria para la nueva imagen
     //Recorriendo la imagen
     //Idea extraida del video: https://solarianprogrammer.com/2019/06/10/c-programming-reading-writing-images-stb_image-libraries/
-    for(uint8_t *p = img->data, *pg = binary_img; p != img->data + img_size; p+= img->channels, pg+= img->channels){
+    for(uint8_t *p = data, *pg = binary_img; p != data + img_size; p+= channels, pg+= channels){
         //Si el valor del pixel es mayor al umbral asignarlo a 255 sino asignarlo a 0
-        if(*p > c->bin_threshold){
+        if(*p > bin_threshold){
             *pg = (uint8_t)255; 
         }
         else{
             *pg = (uint8_t)0;
         }
     }
-    free(img->data); // Liberación de memoria
-    img->data = binary_img; // Asignación de la nueva imagen
+    free(data);
+    return binary_img;
 }
 
-/**
- * @brief Función que devuelve si una imagen es lo suficentemente
- * negra en base a un umbral
- * 
- * @param c Estructura de configuracion
- * @param img Estructura Imagen
- * @return int Si es suficientemente negra devuelve 1 de lo contrario 0
- */
+
 int rate(Config * c,Image *img){
     int img_size = img->width*img->height*img->channels; //Tamaño de la imagen
     int black_count = 0; // Contador
