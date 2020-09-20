@@ -25,21 +25,31 @@ Config* load_config(int argc, char const *argv[]){
     Config* config = (Config*)malloc(sizeof(Config));
     config->images = 0;
     int existImages = 0;
+
+    config->threads = 0;
+    int existThreads = 0;
+
     config->bin_threshold = 0;
     int existBin_threshold = 0;
     config->rating_threshold = 0;
     int existRating_threshold = 0;
-    config->lap_mask_file_name = NULL;
-    int existLap_mask_file_name = 0;
+
+    config->buff_size = 0;
+    int existBuff = 0;
+
     config->show = 0;
     int c;
 
-    while ((c = getopt(argc,argv,"c:u:n:m:b")) != -1)
+    while ((c = getopt(argc,argv,"c:h:u:n:b:f")) != -1)
     switch (c)
     {
         case 'c':
             config->images = atoi(optarg);
             existImages = 1;
+            break;
+        case 'h':
+            config->threads = atoi(optarg);
+            existThreads = 1;
             break;
         case 'u':
             config->bin_threshold = atoi(optarg);
@@ -49,69 +59,19 @@ Config* load_config(int argc, char const *argv[]){
             config->rating_threshold = atoi(optarg);
             existRating_threshold = 1;
             break;
-        case 'm':
-            config->lap_mask_file_name = optarg;
-            existLap_mask_file_name = 1;
-            break;
         case 'b':
+            config->buff_size = atoi(optarg);
+            existBuff = 1;
+            break;
+        case 'f':
             config->show = 1;
             break;
         default:
             abort ();
     }
-    if(existImages && existBin_threshold && existRating_threshold && existLap_mask_file_name){
+    if(existImages && existThreads && existBin_threshold && existRating_threshold && existBuff){
         return config;
     }
     return NULL;
     
 }
-
-
-/**
- * @brief Función que lee el archivo con la máscara laplaciana y la guarda
- *         en la estructura de configuracion. La mascara se guarda en un arreglo
- *         de largo 9
- * 
- * @param c Estructura configuracion 
- * @return int Si es válida la apertura devuelve un 1 de lo contrario 0.
- */
-int read_lap_mask(Config *c){
-    FILE *fp;
-    char str[10000];
-    
-    fp = fopen(c->lap_mask_file_name, "r");
-    if (fp == NULL){
-        return 0;
-    }
-    int lap_mask[9];
-    int i = 0;
-    int j = 0;
-    char * token;
-    // Va leyendo linea por linea y separa la linea en 3
-    while (fgets(str, 10000, fp) != NULL){
-        
-        token = strtok(str, " ");
-        lap_mask[i] = atoi(token);
-        i = i+1;
-
-        token = strtok(NULL, " ");
-        lap_mask[i] = atoi(token);
-        i = i+1;
-
-        token = strtok(NULL, " ");
-        lap_mask[i] = atoi(token);
-        i = i+1;
-    }
-    fclose(fp);
-    c->lap_mask = (int*)malloc(sizeof(int)*9);
-    i = 0;
-    while(i < 9){
-        c->lap_mask[i] = lap_mask[i];
-        i = i+1;
-    }
-    
-    return 1;
-}
-
-
-

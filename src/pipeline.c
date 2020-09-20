@@ -142,7 +142,7 @@ uint8_t * rgb_to_grayscale(uint8_t * data,int width, int height, int *channels){
     uint8_t *gray_img = malloc(sizeof(uint8_t)*gray_img_size); //Asignar la memoria para la nueva imagen
     //Recorriendo la imagen
     //Idea extraida del video: https://solarianprogrammer.com/2019/06/10/c-programming-reading-writing-images-stb_image-libraries/
-    for(uint8_t *p = data, *pg = gray_img; p != data + img_size; p+= channels, pg+= gray_channels){
+    for(uint8_t *p = data, *pg = gray_img; p != data + img_size; p+= *channels, pg+= gray_channels){
         *pg = (uint8_t)((*p)*0.3 + (*p + 1)*0.59 + (*p+2)*0.11);
     }
     free(data);
