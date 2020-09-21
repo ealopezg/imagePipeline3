@@ -17,7 +17,7 @@
  * @param c Configuracion
  * @return uint8_t 
  */
-uint8_t laplace(uint8_t * p,int i,int j,Image*img,Config*c){
+uint8_t laplace(uint8_t * p,int i,int j,uint8_t * data,int width,int height,int channels,int * lap_mask){
     // Se inicializa el valor inicial, en esta variable se irá guardando
     // El resultado de la función
     uint8_t pixel = 0;
@@ -63,68 +63,68 @@ uint8_t laplace(uint8_t * p,int i,int j,Image*img,Config*c){
     //PIXEL 0: largo+1 pixeles atrás
     
     if(i-1 >= 0 && j-1 >= 0){
-        pivot = p-(img->channels*(img->width+1));
-        pixel = pixel + (*pivot)*c->lap_mask[0]; 
+        pivot = p-(channels*(width+1));
+        pixel = pixel + (*pivot)*lap_mask[0]; 
     }
 
     //PIXEL 1: largo pixeles atrás
     
     if(j-1 >= 0){
-        pivot = p-(img->channels*(img->width));
-        pixel = pixel + (*pivot)*c->lap_mask[1];
+        pivot = p-(channels*(width));
+        pixel = pixel + (*pivot)*lap_mask[1];
     }
     
     //PIXEL 2: largo - 1 pixeles atrás
     
-    if(i+1 < img->width && j-1 >= 0){
-        pivot = p-(img->channels*(img->width-1));
-        pixel = pixel + (*pivot)*c->lap_mask[2];
+    if(i+1 < width && j-1 >= 0){
+        pivot = p-(channels*(width-1));
+        pixel = pixel + (*pivot)*lap_mask[2];
     }
 
 
     //PIXEL 3: 1 pixel atras
     
     if(i-1 >= 0 ){
-        pivot = p-(img->channels);
-        pixel = pixel + (*pivot)*c->lap_mask[3];
+        pivot = p-(channels);
+        pixel = pixel + (*pivot)*lap_mask[3];
     }
    
     //PIXEL 4: El mismo pixel
     
     
-    pixel = pixel + (*p)*c->lap_mask[4];
+    pixel = pixel + (*p)*lap_mask[4];
     
     
 
     //PIXEL 5: 1 pixel adelante
     
-    if(i+1 < img->width ){
-        pivot = p+(img->channels);
-        pixel = pixel + (*pivot)*c->lap_mask[5];
+    if(i+1 < width ){
+        pivot = p+(channels);
+        pixel = pixel + (*pivot)*lap_mask[5];
     }
     
 
 
     //PIXEL 6: largo-1 pixeles adelante
     
-    if(i-1 >= 0  && j+1 < img->height){
-        pivot = p+(img->channels*(img->width-1));
-        pixel = pixel + (*pivot)*c->lap_mask[6];
+    if(i-1 >= 0  && j+1 < height){
+        pivot = p+(channels*(width-1));
+        pixel = pixel + (*pivot)*lap_mask[6];
     }
     
 
     //PIXEL 7: largo pixeles adelante
     
-    if(j+1 < img->height){
-        pivot = p+(img->channels*(img->width));
-        pixel = pixel + (*pivot)*c->lap_mask[7];
+    if(j+1 < height){
+        pivot = p+(channels*(width));
+        pixel = pixel + (*pivot)*lap_mask[7];
     }
     
     //PIXEL 8: largo+1 pixeles adelante
     
-    if(i+1 < img->width && j+1 < img->height){
-        pivot = p+(img->channels*(img->width+1));
-        pixel = pixel + (*pivot)*c->lap_mask[8];
+    if(i+1 < width && j+1 < height){
+        pivot = p+(channels*(width+1));
+        pixel = pixel + (*pivot)*lap_mask[8];
     }
 
 
@@ -152,24 +152,24 @@ uint8_t * rgb_to_grayscale(uint8_t * data,int width, int height, int *channels){
 
 
 
-void apply_lap_filter(Config * c,Image *img){
-    int img_size = img->width*img->height*img->channels; //Tamaño de la imagen
+uint8_t * apply_lap_filter(uint8_t * data,int width, int height, int channels,int * lap_mask){
+    int img_size = width*height*channels; //Tamaño de la imagen
     uint8_t *lap_img = malloc(sizeof(uint8_t)*img_size); //Asignar la memoria para la nueva imagen
     //Recorriendo la imagen
-    uint8_t *p = img->data;
+    uint8_t *p = data;
     uint8_t *pg = lap_img;
-    for (int j = 0; j < img->height; j++)
+    for (int j = 0; j < height; j++)
     {
-        for (int i = 0; i < img->width; i++)
+        for (int i = 0; i < width; i++)
         {
-            *pg = laplace(p,i,j,img,c);
-            p+= img->channels;
-            pg+= img->channels;
+            *pg = laplace(p,i,j,data,width,height,channels,lap_mask);
+            p+= channels;
+            pg+= channels;
         }
         
     }
-    stbi_image_free(img->data);  // Liberación de memoria
-    img->data = lap_img; // Asignación de la nueva imagen
+    free(data);
+    return lap_img;
 }
 
 
@@ -210,5 +210,17 @@ int rate(Config * c,Image *img){
         return 0;
     }
 
+}
+
+int count_black_pixels(uint8_t * data,int width,int height, int channels){
+    int black_count = 0; // Contador
+    int img_size = width*height*channels; //Tamaño de la imagen
+    for(uint8_t *p = data; p != data + img_size; p+= channels){
+        //Si es negro suma al contador
+        if(*p == 0){
+            black_count+=1; 
+        }
+    }
+    return black_count;
 }
 

@@ -32,7 +32,7 @@ Image* open_image(char* filename){
  * @param img Estructura Imagen
  */
 void free_image(Image *img){
-    if(img->data == NULL){
+    if(img->data != NULL){
         stbi_image_free(img->data);
     } 
     free(img);
@@ -47,4 +47,18 @@ void free_image(Image *img){
  */
 void write_image(char* filename, Image *img){
     stbi_write_jpg(filename, img->width, img->height, img->channels, img->data, 100);
+}
+
+Image * empty_image(int width,int height,int channels){
+    Image * img = malloc(sizeof(Image));
+    img->data = malloc(sizeof(uint8_t)*width*height*channels);
+    img->channels = channels;
+    img->height = height;
+    img->width = width;
+    return img;
+}
+
+
+void write_lines_to_image(Image * img,uint8_t * data,int start, int heigth){
+    memcpy(img->data + (start*img->width*img->channels),data,img->width*img->channels*heigth);
 }
