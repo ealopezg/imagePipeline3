@@ -9,22 +9,28 @@ int rate(Config * c,Image *img);
 uint8_t * apply_lap_filter(uint8_t * data,int width, int height, int channels,int * lap_mask);
 uint8_t laplace(uint8_t * p,int i,int j,uint8_t * data,int width,int height,int channels,int * lap_mask);
 
-
+/**
+ * @brief Estructura del buffer
+ * 
+ */
 typedef struct {
-    uint8_t *buf;
-    int images;
-    size_t buff_size;
-    int lastReaded,lastLoaded;
-    int full, empty;
+    uint8_t *buf; //Buffer de pixeles
+    int images; // Cantidad de imagenes a leer
+    size_t buff_size; // Tamaño de filas que tendrá el buffer (NO DE PIXELES)
+    int lastReaded,lastLoaded; // Donde se guarda la ultima fila leida por una hebra y la ultima fila cargada al buffer por la hebra productora
+    int full, empty; // Full = 0 ó 1 Empty = 0 a buff_size
     pthread_mutex_t mutex;
     pthread_cond_t notFull,notEmpty,canStart;
 }buffer_t;
-
+/**
+ * @brief Estructura de la hebra consumidora
+ * 
+ */
 typedef struct {
     buffer_t * buffer;
-    int t_id;
-    int height;
-    int start;
+    int t_id; // ID
+    int height; //Altura asignada (m)
+    int start; //Fila inicial asignada
 }c_info;
 
 
